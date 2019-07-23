@@ -35,16 +35,30 @@ void loop() {
 
   WiFiClient client = server.available();
 
-  while (client.connected()) {
-    Serial.println("Client Connected");
-    Serial.println("Turn On");
-    digitalWrite(WATER_PUMP_PIN, HIGH);
-    digitalWrite(LED_BUILTIN, HIGH);
-    delay(5000);
+  if (client) {
+    if (client.connected()) {
+      Serial.println("Client Connected");
+      Serial.println("Turn On");
+      digitalWrite(WATER_PUMP_PIN, HIGH);
+      digitalWrite(LED_BUILTIN, HIGH);
+
+      while (client.connected()) {
+        Serial.println("Turn On Loop");
+        Serial.println("Sending 100");
+        server.write(100);
+        Serial.print("Receiving ");
+        Serial.println(client.read());
+        delay(5000);
+        if (client.read() < 0) {
+          Serial.println(client.read());
+          break;
+        }
+      }
+    }
   }
+
   digitalWrite(WATER_PUMP_PIN, LOW);
   digitalWrite(LED_BUILTIN, LOW);
   Serial.println("TURN OFF");
   delay(5000);
-
 }
