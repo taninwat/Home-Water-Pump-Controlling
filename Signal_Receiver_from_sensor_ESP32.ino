@@ -12,7 +12,7 @@ void setup() {
   Serial.begin(115200);
   pinMode(LED_BUILTIN, OUTPUT);
   digitalWrite(LED_BUILTIN, LOW);
-  pinMode(WATER_SENSOR_PIN, INPUT);
+  pinMode(WATER_SENSOR_PIN, INPUT_PULLDOWN);
 }
 
 void loop() {
@@ -32,75 +32,104 @@ void loop() {
     Serial.println("IP address: ");
     Serial.println(WiFi.localIP());
   }
-  Serial.print("Signal = ");
-  Serial.println(digitalRead(WATER_SENSOR_PIN));
 
   WiFiClient client;
 
   if (digitalRead(WATER_SENSOR_PIN) == HIGH) {
-    Serial.println("Confirming");
-    for (int i = 0; i < 10; i++) {
-      Serial.print("Countdown ");
-      Serial.print(i);
-      Serial.println(" Sec");
-      digitalWrite(LED_BUILTIN, !digitalRead(LED_BUILTIN));
-      delay(1000);
-      if (digitalRead(WATER_SENSOR_PIN) == LOW) {
-        break;
-      }
-    }
+
+    client.connect(thingspeakserver, 80);
+    String postStr = apiKey;
+    postStr += "&field1=";
+    postStr += HIGH;
+    postStr += "\r\n\r\n";
+    client.print("POST /update HTTP/1.1\n");
+    client.print("Host: api.thingspeak.com\n");
+    client.print("Connection: close\n");
+    client.print("X-THINGSPEAKAPIKEY: " + apiKey + "\n");
+    client.print("Content-Type: application/x-www-form-urlencoded\n");
+    client.print("Content-Length: ");
+    client.print(postStr.length());
+    client.print("\n\n");
+    client.print(postStr);
+    Serial.println("Thingspeak Updated");
+
     Serial.println("Connecting to the server");
     client.connect("192.168.1.19", 11008);
     Serial.println("Signal On");
     digitalWrite(LED_BUILTIN, HIGH);
+
     while (digitalRead(WATER_SENSOR_PIN) == HIGH) {
       if (digitalRead(WATER_SENSOR_PIN) == LOW) {
         break;
       }
-      /*
-            client.connect(thingspeakserver, 80);
-            String postStr = apiKey;
-            postStr += "&field1=";
-            postStr += HIGH;
-            postStr += "\r\n\r\n";
-            client.print("POST /update HTTP/1.1\n");
-            client.print("Host: api.thingspeak.com\n");
-            client.print("Connection: close\n");
-            client.print("X-THINGSPEAKAPIKEY: " + apiKey + "\n");
-            client.print("Content-Type: application/x-www-form-urlencoded\n");
-            client.print("Content-Length: ");
-            client.print(postStr.length());
-            client.print("\n\n");
-            client.print(postStr);
-            Serial.println("Thingspeak Updated");
-      */
       Serial.println("Signal On Loop");
-      delay(5000);
+      Serial.println("Sending 255");
+      client.write(255);
+      Serial.print("Receiving ");
+      Serial.println(client.read());
+      delay(2500);
     }
+
+    client.connect(thingspeakserver, 80);
+    postStr = apiKey;
+    postStr += "&field1=";
+    postStr += HIGH;
+    postStr += "\r\n\r\n";
+    client.print("POST /update HTTP/1.1\n");
+    client.print("Host: api.thingspeak.com\n");
+    client.print("Connection: close\n");
+    client.print("X-THINGSPEAKAPIKEY: " + apiKey + "\n");
+    client.print("Content-Type: application/x-www-form-urlencoded\n");
+    client.print("Content-Length: ");
+    client.print(postStr.length());
+    client.print("\n\n");
+    client.print(postStr);
+    Serial.println("Thingspeak Updated");
+
   }
 
   if (digitalRead(WATER_SENSOR_PIN) == LOW) {
-    Serial.println("Signal Off");
+
+    client.connect(thingspeakserver, 80);
+    String postStr = apiKey;
+    postStr += "&field1=";
+    postStr += LOW;
+    postStr += "\r\n\r\n";
+    client.print("POST /update HTTP/1.1\n");
+    client.print("Host: api.thingspeak.com\n");
+    client.print("Connection: close\n");
+    client.print("X-THINGSPEAKAPIKEY: " + apiKey + "\n");
+    client.print("Content-Type: application/x-www-form-urlencoded\n");
+    client.print("Content-Length: ");
+    client.print(postStr.length());
+    client.print("\n\n");
+    client.print(postStr);
     client.stop();
-    digitalWrite(LED_BUILTIN, LOW);
-    Serial.println("Disconnected");
-    /*
-        client.connect(thingspeakserver, 80);
-        String postStr = apiKey;
-        postStr += "&field1=";
-        postStr += LOW;
-        postStr += "\r\n\r\n";
-        client.print("POST /update HTTP/1.1\n");
-        client.print("Host: api.thingspeak.com\n");
-        client.print("Connection: close\n");
-        client.print("X-THINGSPEAKAPIKEY: " + apiKey + "\n");
-        client.print("Content-Type: application/x-www-form-urlencoded\n");
-        client.print("Content-Length: ");
-        client.print(postStr.length());
-        client.print("\n\n");
-        client.print(postStr);
-        client.stop();
-    */
-    delay(1000);
+
+    while (digitalRead(WATER_SENSOR_PIN) == LOW) {
+      if (digitalRead(WATER_SENSOR_PIN) == HIGH) {
+        break;
+      }
+      Serial.println("Signal Off Loop");
+      digitalWrite(LED_BUILTIN, LOW);
+      delay(5000);
+    }
+
+    client.connect(thingspeakserver, 80);
+    postStr = apiKey;
+    postStr += "&field1=";
+    postStr += LOW;
+    postStr += "\r\n\r\n";
+    client.print("POST /update HTTP/1.1\n");
+    client.print("Host: api.thingspeak.com\n");
+    client.print("Connection: close\n");
+    client.print("X-THINGSPEAKAPIKEY: " + apiKey + "\n");
+    client.print("Content-Type: application/x-www-form-urlencoded\n");
+    client.print("Content-Length: ");
+    client.print(postStr.length());
+    client.print("\n\n");
+    client.print(postStr);
+    client.stop();
+
   }
 }
